@@ -1,7 +1,8 @@
-package routes
+package router
 
 import (
 	"github.com/l12u/gamemaster/internal/storage"
+	"github.com/l12u/gamemaster/pkg/env"
 	"net/http"
 	"time"
 
@@ -10,7 +11,24 @@ import (
 	"github.com/l12u/gamemaster/internal/model"
 )
 
-var provider = storage.NewLocalProvider()
+var provider storage.Provider
+
+func SetupProvider() {
+	enableRedis := env.BoolOrDefault("ENABLE_REDIS_STORAGE", false)
+	if enableRedis {
+		provider = storage.NewRedisProvider(
+			env.StringOrDefault("REDIS_ADDRESS", "localhost:6379"),
+			env.StringOrDefault("REDIS_PASSWORD", ""),
+			env.IntOrDefault("REDIS_DATABASE", 0),
+		)
+		err := provider.(*storage.RedisProvider).Connect()
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		provider = storage.NewLocalProvider()
+	}
+}
 
 // PostGame inserts a game into the registry
 func PostGame(c *gin.Context) {

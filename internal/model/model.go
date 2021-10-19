@@ -31,6 +31,8 @@ type Game struct {
 
 type GameMap map[string]*Game
 
+var EmptyGameMap = make(GameMap, 0)
+
 type UpdateStateRequest struct {
 	NewState string `json:"state"`
 }
