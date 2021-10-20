@@ -64,35 +64,6 @@ func (r *RedisProvider) PutGame(g *model.Game) error {
 	return err
 }
 
-func (r *RedisProvider) DeleteGame(id string) error {
-	err := r.client.Del(ctx, getKeyFromGame(id)).Err()
-	if err != nil {
-		return err
-	}
-
-	// remove from iter list
-	err = r.client.SRem(ctx, gamesIterListKey, id).Err()
-	return err
-}
-
-func (r *RedisProvider) ClearGames() error {
-	gameIds, err := r.client.SMembers(ctx, gamesIterListKey).Result()
-	if err != nil {
-		return err
-	}
-	gameKeys := getKeysFromGameIds(gameIds)
-
-	// delete all single game entries from Redis
-	err = r.client.Del(ctx, gameKeys...).Err()
-	if err != nil {
-		return err
-	}
-
-	// delete iter list
-	err = r.client.Del(ctx, gamesIterListKey).Err()
-	return err
-}
-
 func (r *RedisProvider) GetGame(id string) (*model.Game, error) {
 	str, err := r.client.Get(ctx, getKeyFromGame(id)).Result()
 	if err != nil {
@@ -140,9 +111,62 @@ func (r *RedisProvider) GetAllGames() (model.GameMap, error) {
 	return gameMap, nil
 }
 
+func (r *RedisProvider) DeleteGame(id string) error {
+	err := r.client.Del(ctx, getKeyFromGame(id)).Err()
+	if err != nil {
+		return err
+	}
+
+	// remove from iter list
+	err = r.client.SRem(ctx, gamesIterListKey, id).Err()
+	return err
+}
+
+func (r *RedisProvider) ClearGames() error {
+	gameIds, err := r.client.SMembers(ctx, gamesIterListKey).Result()
+	if err != nil {
+		return err
+	}
+	gameKeys := getKeysFromGameIds(gameIds)
+
+	// delete all single game entries from Redis
+	err = r.client.Del(ctx, gameKeys...).Err()
+	if err != nil {
+		return err
+	}
+
+	// delete iter list
+	err = r.client.Del(ctx, gamesIterListKey).Err()
+	return err
+}
+
 func (r *RedisProvider) HasGame(id string) (bool, error) {
 	err := r.client.Exists(ctx, getKeyFromGame(id)).Err()
 	return err == nil, err
+}
+
+func (r *RedisProvider) PutBoard(b *model.Board) error {
+	panic("implement me")
+}
+
+func (r *RedisProvider) GetBoard(key string) (*model.Board, error) {
+	panic("implement me")
+}
+
+func (r *RedisProvider) GetBoards(t string) (model.BoardMap, error) {
+	panic("implement me")
+}
+
+func (r *RedisProvider) GetAllBoards() (model.BoardMap, error) {
+	panic("implement me")
+}
+
+func (r *RedisProvider) DeleteBoard(id string) error {
+	panic("implement me")
+}
+
+func (r *RedisProvider) HasBoard(id string) (bool, error) {
+	panic("implement me")
 }
 
 func getKeyFromGame(id string) string {

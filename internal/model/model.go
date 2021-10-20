@@ -11,8 +11,10 @@ const (
 )
 
 var supportedStates = []string{StateLobby, StateRunning}
+var supportedRoles = []string{RoleHost, RolePlayer}
 
-// var supportedRoles = []string{RoleHost, RolePlayer}
+var EmptyGameMap = make(GameMap, 0)
+var EmptyBoardMap = make(BoardMap, 0)
 
 type Player struct {
 	Id   string `json:"id"`
@@ -21,6 +23,7 @@ type Player struct {
 
 type Game struct {
 	Id        string            `json:"id"`
+	Type      string            `json:"type"`
 	Players   []Player          `json:"players"`
 	Roles     map[string]string `json:"roles"`
 	State     string            `json:"state"`
@@ -31,10 +34,33 @@ type Game struct {
 
 type GameMap map[string]*Game
 
-var EmptyGameMap = make(GameMap, 0)
-
 type UpdateStateRequest struct {
 	NewState string `json:"state"`
+}
+
+type Board struct {
+	Id           string `json:"id"`
+	Type         string `json:"type"`
+	URL          string `json:"url"`
+	RegisteredAt int64  `json:"registeredAt"`
+}
+
+type BoardMap map[string]*Board
+
+func (g GameMap) AsSlice() []*Game {
+	sl := make([]*Game, len(g))
+	for _, game := range g {
+		sl = append(sl, game)
+	}
+	return sl
+}
+
+func (b BoardMap) AsSlice() []*Board {
+	sl := make([]*Board, len(b))
+	for _, board := range b {
+		sl = append(sl, board)
+	}
+	return sl
 }
 
 func IsSupportedState(s string) bool {

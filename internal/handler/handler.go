@@ -1,8 +1,9 @@
-package router
+package handler
 
 import (
 	"github.com/l12u/gamemaster/internal/storage"
 	"github.com/l12u/gamemaster/pkg/env"
+	"github.com/l12u/gamemaster/pkg/valid"
 	"net/http"
 	"time"
 
@@ -60,22 +61,6 @@ func PostGame(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"id": g.Id})
-}
-
-// DeleteGame deletes a specific game
-func DeleteGame(c *gin.Context) {
-	id := c.Param("id")
-
-	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
-		return
-	}
-
-	err := provider.DeleteGame(id)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
 }
 
 // GetAllGames simply returns all games
@@ -212,6 +197,102 @@ func PutState(c *gin.Context) {
 	}
 	g.State = req.NewState
 	err = provider.PutGame(g)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+}
+
+// DeleteGame deletes a specific game
+func DeleteGame(c *gin.Context) {
+	id := c.Param("id")
+
+	if ok, _ := provider.HasGame(id); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		return
+	}
+
+	err := provider.DeleteGame(id)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+}
+
+// PostBoard registers a new board with its
+// respecting URL.
+// Here we can have multiple boards with the
+// same type.
+func PostBoard(c *gin.Context) {
+	var b model.Board
+
+	err := c.BindJSON(&b)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	if !valid.ValidateURL(b.URL) {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "the url is not valid"})
+		return
+	}
+	if !valid.ValidateSlug(b.Type) {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "wrong format for type"})
+		return
+	}
+
+	ct := time.Now().UnixMilli()
+	b.RegisteredAt = ct
+	b.Id = uuid.NewString()
+
+	err = provider.PutBoard(&b)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"id": b.Id})
+}
+
+// GetBoards returns all boards of a specific type
+func GetBoards(c *gin.Context) {
+	t := c.Param("type")
+
+	if !valid.ValidateSlug(t) {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "wrong format for type"})
+		return
+	}
+
+	boards, err := provider.GetBoards(t)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, boards)
+}
+
+// GetAllBoards returns all registered boards
+func GetAllBoards(c *gin.Context) {
+	boards, err := provider.GetAllBoards()
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, boards)
+}
+
+// DeleteBoard deletes an already registered board.
+func DeleteBoard(c *gin.Context) {
+	id := c.Param("id")
+
+	if ok, _ := provider.HasBoard(id); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "a board with this id does not exist"})
+		return
+	}
+
+	err := provider.DeleteBoard(id)
 	if err != nil {
 		_ = c.Error(err)
 		return
