@@ -11,10 +11,12 @@ const (
 )
 
 var supportedStates = []string{StateLobby, StateRunning}
-var supportedRoles = []string{RoleHost, RolePlayer}
 
-var EmptyGameMap = make(GameMap, 0)
-var EmptyBoardMap = make(BoardMap, 0)
+// var supportedRoles = []string{RoleHost, RolePlayer}
+
+var EmptyGameMap = make(GameMap)
+
+// var EmptyBoardMap = make(BoardMap)
 
 type Player struct {
 	Id   string `json:"id"`

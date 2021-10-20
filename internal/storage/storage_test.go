@@ -43,8 +43,7 @@ func testPutGame(p Provider, t *testing.T) {
 	}
 	if g1 == nil {
 		t.Errorf("got nil when getting game with id %s", "someId")
-	}
-	if g1.Id != "someId" {
+	} else if g1.Id != "someId" {
 		t.Errorf("expected to get game with id = %s, but got %s", "someId", g1.Id)
 	}
 
@@ -69,8 +68,7 @@ func testPutGame(p Provider, t *testing.T) {
 	}
 	if g3 == nil {
 		t.Errorf("got nil when getting game with id %s", "someId")
-	}
-	if g3.Id != "someId" {
+	} else if g3.Id != "someId" {
 		t.Errorf("expected to get game with id = %s, but got %s", "someId", g3.Id)
 	}
 	if g3.State != "someOtherState" {
