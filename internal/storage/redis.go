@@ -17,6 +17,9 @@ const (
 	// into the Redis, where the unique id is appended
 	// to the end.
 	gameKeyFormat = "game:%s"
+
+	boardsIterListKey = "boards"
+	boardKeyFormat    = "board:%s"
 )
 
 type RedisProvider struct {
@@ -146,27 +149,94 @@ func (r *RedisProvider) HasGame(id string) (bool, error) {
 }
 
 func (r *RedisProvider) PutBoard(b *model.Board) error {
-	panic("implement me")
+	m, err := json.Marshal(b)
+	if err != nil {
+		return err
+	}
+	str := string(m)
+
+	err = r.client.Set(ctx, getKeyFromBoard(b.Id), str, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	// push to iter list
+	err = r.client.SAdd(ctx, boardsIterListKey, b.Id).Err()
+	return err
 }
 
-func (r *RedisProvider) GetBoard(key string) (*model.Board, error) {
-	panic("implement me")
+func (r *RedisProvider) GetBoard(id string) (*model.Board, error) {
+	str, err := r.client.Get(ctx, getKeyFromBoard(id)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var b model.Board
+	err = json.Unmarshal([]byte(str), &b)
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
 }
 
 func (r *RedisProvider) GetBoards(t string) (model.BoardMap, error) {
-	panic("implement me")
+	// Of course, we have to go through every board to know
+	// which of them are of type `t`.
+	// Otherwise, we would have to have a seperate mapping from type
+	// to their respective boards, but that is probably overkill.
+	bm, err := r.GetAllBoards()
+	if err != nil {
+		return nil, err
+	}
+	return bm.FilterType(t), nil
 }
 
 func (r *RedisProvider) GetAllBoards() (model.BoardMap, error) {
-	panic("implement me")
+	boardIds, err := r.client.SMembers(ctx, boardsIterListKey).Result()
+	if err != nil {
+		return nil, err
+	}
+	if len(boardIds) == 0 {
+		return model.EmptyBoardMap, nil
+	}
+	boardKeys := getKeysFromBoardIds(boardIds)
+
+	res, err := r.client.MGet(ctx, boardKeys...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	boardMap := make(model.BoardMap, len(res))
+	for _, r := range res {
+		str, ok := r.(string)
+		if !ok {
+			continue
+		}
+
+		var b model.Board
+		err = json.Unmarshal([]byte(str), &b)
+		if err != nil {
+			return nil, err
+		}
+		boardMap[b.Id] = &b
+	}
+	return boardMap, nil
 }
 
 func (r *RedisProvider) DeleteBoard(id string) error {
-	panic("implement me")
+	err := r.client.Del(ctx, getKeyFromBoard(id)).Err()
+	if err != nil {
+		return err
+	}
+
+	// remove from iter list
+	err = r.client.SRem(ctx, boardsIterListKey, id).Err()
+	return err
 }
 
 func (r *RedisProvider) HasBoard(id string) (bool, error) {
-	panic("implement me")
+	err := r.client.Exists(ctx, getKeyFromBoard(id)).Err()
+	return err == nil, err
 }
 
 func getKeyFromGame(id string) string {
@@ -177,6 +247,18 @@ func getKeysFromGameIds(ids []string) []string {
 	gameKeys := make([]string, len(ids))
 	for _, gid := range ids {
 		gameKeys = append(gameKeys, getKeyFromGame(gid))
+	}
+	return gameKeys
+}
+
+func getKeyFromBoard(id string) string {
+	return fmt.Sprintf(boardKeyFormat, id)
+}
+
+func getKeysFromBoardIds(ids []string) []string {
+	gameKeys := make([]string, len(ids))
+	for _, gid := range ids {
+		gameKeys = append(gameKeys, getKeyFromBoard(gid))
 	}
 	return gameKeys
 }

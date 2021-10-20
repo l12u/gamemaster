@@ -1,26 +1,25 @@
 package model
 
 import (
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )
 
 func TestIsSupportedState(t *testing.T) {
-	s0 := "foobar"
-	s1 := "12467"
-	s2 := StateLobby
-	s3 := strings.ToUpper(StateRunning)
+	a := assert.New(t)
 
-	if IsSupportedState(s0) {
-		t.Errorf("%s should not be a supported state", s0)
-	}
-	if IsSupportedState(s1) {
-		t.Errorf("%s should not be a supported state", s1)
-	}
-	if !IsSupportedState(s2) {
-		t.Errorf("%s should be a supported state", s2)
-	}
-	if !IsSupportedState(s3) {
-		t.Errorf("%s should be a supported state", s3)
-	}
+	a.False(IsSupportedRole("foobar"))
+	a.False(IsSupportedRole("12467"))
+	a.True(IsSupportedRole(StateLobby))
+	a.True(IsSupportedRole(strings.ToUpper(StateRunning)))
+}
+
+func TestIsSupportedRole(t *testing.T) {
+	a := assert.New(t)
+
+	a.False(IsSupportedRole("foobar"))
+	a.False(IsSupportedRole("12467"))
+	a.True(IsSupportedRole(RoleHost))
+	a.True(IsSupportedRole(strings.ToUpper(RolePlayer)))
 }

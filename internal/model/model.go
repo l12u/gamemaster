@@ -11,12 +11,10 @@ const (
 )
 
 var supportedStates = []string{StateLobby, StateRunning}
-
-// var supportedRoles = []string{RoleHost, RolePlayer}
+var supportedRoles = []string{RoleHost, RolePlayer}
 
 var EmptyGameMap = make(GameMap)
-
-// var EmptyBoardMap = make(BoardMap)
+var EmptyBoardMap = make(BoardMap)
 
 type Player struct {
 	Id   string `json:"id"`
@@ -65,10 +63,31 @@ func (b BoardMap) AsSlice() []*Board {
 	return sl
 }
 
+func (b BoardMap) FilterType(t string) BoardMap {
+	fbm := make(BoardMap)
+	for _, board := range b {
+		if board.Type == t {
+			fbm[board.Id] = board
+		}
+	}
+	return fbm
+}
+
 func IsSupportedState(s string) bool {
 	var l = strings.ToLower(s)
 
 	for _, ss := range supportedStates {
+		if l == ss {
+			return true
+		}
+	}
+	return false
+}
+
+func IsSupportedRole(s string) bool {
+	var l = strings.ToLower(s)
+
+	for _, ss := range supportedRoles {
 		if l == ss {
 			return true
 		}

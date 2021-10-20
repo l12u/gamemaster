@@ -1,0 +1,16 @@
+version: "3.1"
+
+services:
+  redis:
+    image: redis:6.0-alpine
+    ports:
+      - 6379:6379
+  gamemaster:
+    image: l12u/gamemaster:latest
+    build: .
+    environment:
+      ENABLE_REDIS_STORAGE: "true"
+      REDIS_ADDRESS: "redis:6379"
+    ports:
+      - 8080:8080
+    restart: always

@@ -5,11 +5,15 @@ import (
 )
 
 type LocalProvider struct {
-	games model.GameMap
+	games  model.GameMap
+	boards model.BoardMap
 }
 
 func NewLocalProvider() *LocalProvider {
-	return &LocalProvider{games: make(model.GameMap)}
+	return &LocalProvider{
+		games:  make(model.GameMap),
+		boards: make(model.BoardMap),
+	}
 }
 
 func (l *LocalProvider) PutGame(g *model.Game) error {
@@ -18,8 +22,7 @@ func (l *LocalProvider) PutGame(g *model.Game) error {
 }
 
 func (l *LocalProvider) GetGame(id string) (*model.Game, error) {
-	g := l.games[id]
-	return g, nil
+	return l.games[id], nil
 }
 
 func (l *LocalProvider) GetAllGames() (model.GameMap, error) {
@@ -42,25 +45,34 @@ func (l *LocalProvider) HasGame(id string) (bool, error) {
 }
 
 func (l *LocalProvider) PutBoard(b *model.Board) error {
-	panic("implement me")
+	l.boards[b.Id] = b
+	return nil
 }
 
-func (l *LocalProvider) GetBoard(key string) (*model.Board, error) {
-	panic("implement me")
+func (l *LocalProvider) GetBoard(id string) (*model.Board, error) {
+	return l.boards[id], nil
 }
 
 func (l *LocalProvider) GetBoards(t string) (model.BoardMap, error) {
-	panic("implement me")
+	bm := make(model.BoardMap)
+	for _, board := range l.boards {
+		if board.Type == t {
+			bm[board.Id] = board
+		}
+	}
+	return bm, nil
 }
 
 func (l *LocalProvider) GetAllBoards() (model.BoardMap, error) {
-	panic("implement me")
+	return l.boards, nil
 }
 
 func (l *LocalProvider) DeleteBoard(id string) error {
-	panic("implement me")
+	delete(l.boards, id)
+	return nil
 }
 
 func (l *LocalProvider) HasBoard(id string) (bool, error) {
-	panic("implement me")
+	_, ok := l.boards[id]
+	return ok, nil
 }

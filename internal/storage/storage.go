@@ -11,7 +11,7 @@ type Provider interface {
 	HasGame(id string) (bool, error)
 
 	PutBoard(b *model.Board) error
-	GetBoard(key string) (*model.Board, error)
+	GetBoard(id string) (*model.Board, error)
 	GetBoards(t string) (model.BoardMap, error)
 	GetAllBoards() (model.BoardMap, error)
 	DeleteBoard(id string) error
