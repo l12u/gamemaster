@@ -28,7 +28,10 @@ func FromFile(path string) (*BoardConfig, error) {
 	}
 
 	var cfg BoardConfig
-	json.Unmarshal(bytes, &cfg)
+	err = json.Unmarshal(bytes, &cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	return &cfg, nil
 }

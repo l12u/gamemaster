@@ -54,6 +54,7 @@ func testPutGame(p Provider, t *testing.T) {
 	}
 	a.True(g3.State == "someOtherState")
 	ok, err := p.HasGame("someId")
+	a.NoError(err)
 	a.True(ok)
 
 	// test when inserting 10 items, we get 10 more games

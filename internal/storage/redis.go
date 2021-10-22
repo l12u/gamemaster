@@ -17,9 +17,6 @@ const (
 	// into the Redis, where the unique id is appended
 	// to the end.
 	gameKeyFormat = "game:%s"
-
-	boardsIterListKey = "boards"
-	boardKeyFormat    = "board:%s"
 )
 
 type RedisProvider struct {
@@ -156,18 +153,6 @@ func getKeysFromGameIds(ids []string) []string {
 	gameKeys := make([]string, len(ids))
 	for _, gid := range ids {
 		gameKeys = append(gameKeys, getKeyFromGame(gid))
-	}
-	return gameKeys
-}
-
-func getKeyFromBoard(id string) string {
-	return fmt.Sprintf(boardKeyFormat, id)
-}
-
-func getKeysFromBoardIds(ids []string) []string {
-	gameKeys := make([]string, len(ids))
-	for _, gid := range ids {
-		gameKeys = append(gameKeys, getKeyFromBoard(gid))
 	}
 	return gameKeys
 }
