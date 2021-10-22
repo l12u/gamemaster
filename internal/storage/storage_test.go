@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/l12u/gamemaster/internal/model"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -14,93 +15,62 @@ func TestLocalProvider_PutGame(t *testing.T) {
 }
 
 func testPutGame(p Provider, t *testing.T) {
+	a := assert.New(t)
+
 	games0, err := p.GetAllGames()
-	if err != nil {
-		t.Errorf("failed to execute GetAllGames(): %v", err)
-	}
-	if len(games0) != 0 {
-		t.Errorf("expected to be empty, but contains %d games", len(games0))
-	}
+	a.NoError(err)
+	a.True(len(games0) == 0)
 
 	// test when putting in a specific game
 
 	g0 := model.Game{Id: "someId"}
 	err = p.PutGame(&g0)
-	if err != nil {
-		t.Errorf("failed to execute PutGame(%v): %v", g0, err)
-	}
+	a.NoError(err)
+
 	games1, err := p.GetAllGames()
-	if err != nil {
-		t.Errorf("failed to execute GetAllGames(): %v", err)
-	}
-	if len(games1) != 1 {
-		t.Errorf("expected to contain 1 game, but contains %d games", len(games1))
-	}
+	a.NoError(err)
+	a.True(len(games1) == 1)
 
 	g1, err := p.GetGame("someId")
-	if err != nil {
-		t.Errorf("failed to execute GetGame(%s): %v", "someId", err)
-	}
-	if g1 == nil {
-		t.Errorf("got nil when getting game with id %s", "someId")
-	} else if g1.Id != "someId" {
-		t.Errorf("expected to get game with id = %s, but got %s", "someId", g1.Id)
+	a.NoError(err)
+	if a.NotNil(g1) {
+		a.True(g1.Id == "someId")
 	}
 
 	// test when putting the same twice
 
 	g2 := model.Game{Id: "someId", State: "someOtherState"}
 	err = p.PutGame(&g2)
-	if err != nil {
-		t.Errorf("failed to execute PutGame(%v): %v", g2, err)
-	}
+	a.NoError(err)
+
 	games2, err := p.GetAllGames()
-	if err != nil {
-		t.Errorf("failed to execute GetAllGames(): %v", err)
-	}
-	if len(games2) != 1 {
-		t.Errorf("expected to still contain 1 game, but contains %d games", len(games2))
-	}
+	a.NoError(err)
+	a.True(len(games2) == 1)
 
 	g3, err := p.GetGame("someId")
-	if err != nil {
-		t.Errorf("failed to execute GetGame(%s): %v", "someId", err)
+	a.NoError(err)
+	if a.NotNil(g3) {
+		a.True(g3.Id == "someId")
 	}
-	if g3 == nil {
-		t.Errorf("got nil when getting game with id %s", "someId")
-	} else if g3.Id != "someId" {
-		t.Errorf("expected to get game with id = %s, but got %s", "someId", g3.Id)
-	}
-	if g3.State != "someOtherState" {
-		t.Errorf("expected to get game with state = %s, but got %s", "someOtherState", g3.State)
-	}
-	if ok, _ := p.HasGame("someId"); !ok {
-		t.Errorf("expected HasGame() to return true")
-	}
+	a.True(g3.State == "someOtherState")
+	ok, err := p.HasGame("someId")
+	a.True(ok)
 
 	// test when inserting 10 items, we get 10 more games
 
 	games3, err := p.GetAllGames()
-	if err != nil {
-		t.Errorf("failed to execute GetAllGames(): %v", err)
-	}
+	a.NoError(err)
 	prevSize := len(games3)
 
 	for i := 0; i < 10; i++ {
 		g4 := model.Game{Id: fmt.Sprintf("someOtherId%d", i)}
 		err = p.PutGame(&g4)
-		if err != nil {
-			t.Errorf("failed to execute PutGame(%v): %v", g4, err)
-		}
+		a.NoError(err)
 	}
 
 	games4, err := p.GetAllGames()
-	if err != nil {
-		t.Errorf("failed to execute GetAllGames(): %v", err)
-	}
+	a.NoError(err)
 	afterSize := len(games4)
 
-	if afterSize-prevSize != 10 {
-		t.Errorf("expected to get %d more entries, but we got %d", 10, afterSize-prevSize)
-	}
+	a.True(afterSize-prevSize == 10)
 }

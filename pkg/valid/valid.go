@@ -5,8 +5,6 @@ import (
 	"regexp"
 )
 
-// TODO validate URL and type (regex)
-
 func ValidateURL(s string) bool {
 	_, err := url.ParseRequestURI(s)
 	return err == nil

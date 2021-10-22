@@ -14,22 +14,21 @@ var supportedStates = []string{StateLobby, StateRunning}
 var supportedRoles = []string{RoleHost, RolePlayer}
 
 var EmptyGameMap = make(GameMap)
-var EmptyBoardMap = make(BoardMap)
 
 type Player struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
+	Role string `json:"role"`
 }
 
 type Game struct {
-	Id        string            `json:"id"`
-	Type      string            `json:"type"`
-	Players   []Player          `json:"players"`
-	Roles     map[string]string `json:"roles"`
-	State     string            `json:"state"`
-	CreatedAt int64             `json:"createdAt"`
-	UpdatedAt int64             `json:"updatedAt"`
-	GameData  interface{}       `json:"gameData"`
+	Id        string      `json:"id"`
+	Type      string      `json:"type"`
+	Players   []*Player   `json:"players"`
+	State     string      `json:"state"`
+	CreatedAt int64       `json:"createdAt"`
+	UpdatedAt int64       `json:"updatedAt"`
+	GameData  interface{} `json:"gameData"`
 }
 
 type GameMap map[string]*Game
@@ -37,15 +36,6 @@ type GameMap map[string]*Game
 type UpdateStateRequest struct {
 	NewState string `json:"state"`
 }
-
-type Board struct {
-	Id           string `json:"id"`
-	Type         string `json:"type"`
-	URL          string `json:"url"`
-	RegisteredAt int64  `json:"registeredAt"`
-}
-
-type BoardMap map[string]*Board
 
 func (g GameMap) AsSlice() []*Game {
 	sl := make([]*Game, len(g))
@@ -55,22 +45,14 @@ func (g GameMap) AsSlice() []*Game {
 	return sl
 }
 
-func (b BoardMap) AsSlice() []*Board {
-	sl := make([]*Board, len(b))
-	for _, board := range b {
-		sl = append(sl, board)
-	}
-	return sl
-}
-
-func (b BoardMap) FilterType(t string) BoardMap {
-	fbm := make(BoardMap)
-	for _, board := range b {
-		if board.Type == t {
-			fbm[board.Id] = board
+func (g *Game) GetPlayer(pid string) *Player {
+	for _, player := range g.Players {
+		if player.Id == pid {
+			return player
 		}
 	}
-	return fbm
+
+	return nil
 }
 
 func IsSupportedState(s string) bool {

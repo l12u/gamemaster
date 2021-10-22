@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"fmt"
+	"github.com/l12u/gamemaster/internal/config"
 	"github.com/l12u/gamemaster/internal/storage"
 	"github.com/l12u/gamemaster/pkg/env"
 	"github.com/l12u/gamemaster/pkg/valid"
+	"log"
 	"net/http"
 	"time"
 
@@ -13,6 +16,7 @@ import (
 )
 
 var provider storage.Provider
+var cfg *config.BoardConfig
 
 func SetupProvider() {
 	enableRedis := env.BoolOrDefault("ENABLE_REDIS_STORAGE", false)
@@ -29,6 +33,13 @@ func SetupProvider() {
 	} else {
 		provider = storage.NewLocalProvider()
 	}
+
+	c, err := config.FromFile(env.StringOrDefault("BOARD_CONFIG", "/etc/gamemaster/boards.json"))
+	if err != nil {
+		// give a warning
+		log.Println("warning: no board config found, that is not good :(")
+	}
+	cfg = c
 }
 
 // PostGame inserts a game into the registry
@@ -46,10 +57,13 @@ func PostGame(c *gin.Context) {
 	g.UpdatedAt = ct
 
 	if g.Players == nil {
-		g.Players = make([]model.Player, 0)
-	}
-	if g.Roles == nil {
-		g.Roles = make(map[string]string)
+		g.Players = make([]*model.Player, 0)
+	} else {
+		for _, player := range g.Players {
+			if !model.IsSupportedRole(player.Role) {
+				c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("invalid role given for player %s", player.Name)})
+			}
+		}
 	}
 	g.State = model.StateLobby
 	g.Id = uuid.NewString()
@@ -71,7 +85,7 @@ func GetAllGames(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, games)
+	c.JSON(http.StatusOK, games.AsSlice())
 }
 
 // GetGame gets a specific game
@@ -79,7 +93,7 @@ func GetGame(c *gin.Context) {
 	id := c.Param("id")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
 		return
 	}
 
@@ -99,11 +113,12 @@ func PostPlayerToGame(c *gin.Context) {
 
 	err := c.BindJSON(&player)
 	if err != nil {
+		_ = c.Error(err)
 		return
 	}
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
 		return
 	}
 
@@ -125,11 +140,55 @@ func PostPlayerToGame(c *gin.Context) {
 		return
 	}
 
-	g.Players = append(g.Players, player)
+	g.Players = append(g.Players, &player)
 	err = provider.PutGame(g)
 	if err != nil {
 		_ = c.Error(err)
 		return
+	}
+}
+
+// PutPlayerToGame updates a player from a specific game
+func PutPlayerToGame(c *gin.Context) {
+	id := c.Param("id")
+	pId := c.Param("pId")
+
+	var data *model.Player
+	err := c.BindJSON(&data)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	if ok, _ := provider.HasGame(id); !ok {
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		return
+	}
+
+	g, err := provider.GetGame(id)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+
+	p := g.GetPlayer(pId)
+	if p == nil {
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a player with that id does not exist in that game"})
+		return
+	}
+
+	newRole := data.Role
+	newName := data.Name
+
+	if newRole != "" {
+		if !model.IsSupportedRole(newRole) {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "invalid role"})
+			return
+		}
+		p.Role = newRole
+	}
+	if newName != "" {
+		p.Name = newName
 	}
 }
 
@@ -139,7 +198,7 @@ func DeletePlayerFromGame(c *gin.Context) {
 	pId := c.Param("pId")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
 		return
 	}
 
@@ -181,7 +240,7 @@ func PutState(c *gin.Context) {
 	}
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
 		return
 	}
 
@@ -208,7 +267,7 @@ func DeleteGame(c *gin.Context) {
 	id := c.Param("id")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a game with this id does not exist"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
 		return
 	}
 
@@ -219,43 +278,8 @@ func DeleteGame(c *gin.Context) {
 	}
 }
 
-// PostBoard registers a new board with its
-// respecting URL.
-// Here we can have multiple boards with the
-// same type.
-func PostBoard(c *gin.Context) {
-	var b model.Board
-
-	err := c.BindJSON(&b)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-
-	if !valid.ValidateURL(b.URL) {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "the url is not valid"})
-		return
-	}
-	if !valid.ValidateSlug(b.Type) {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "wrong format for type"})
-		return
-	}
-
-	ct := time.Now().UnixMilli()
-	b.RegisteredAt = ct
-	b.Id = uuid.NewString()
-
-	err = provider.PutBoard(&b)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"id": b.Id})
-}
-
-// GetBoards returns all boards of a specific type
-func GetBoards(c *gin.Context) {
+// GetBoard returns all boards of a specific type
+func GetBoard(c *gin.Context) {
 	t := c.Param("type")
 
 	if !valid.ValidateSlug(t) {
@@ -263,38 +287,22 @@ func GetBoards(c *gin.Context) {
 		return
 	}
 
-	boards, err := provider.GetBoards(t)
-	if err != nil {
-		_ = c.Error(err)
+	var board *config.Board
+	for _, b := range cfg.Boards {
+		if b.Type == t {
+			board = b
+		}
+	}
+
+	if board == nil {
+		c.JSON(http.StatusNotFound, gin.H{"msg": "a board with this type does not exist"})
 		return
 	}
 
-	c.JSON(http.StatusOK, boards)
+	c.JSON(http.StatusOK, board)
 }
 
 // GetAllBoards returns all registered boards
 func GetAllBoards(c *gin.Context) {
-	boards, err := provider.GetAllBoards()
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-
-	c.JSON(http.StatusOK, boards)
-}
-
-// DeleteBoard deletes an already registered board.
-func DeleteBoard(c *gin.Context) {
-	id := c.Param("id")
-
-	if ok, _ := provider.HasBoard(id); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "a board with this id does not exist"})
-		return
-	}
-
-	err := provider.DeleteBoard(id)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
+	c.JSON(http.StatusOK, cfg.Boards)
 }

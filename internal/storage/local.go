@@ -5,14 +5,12 @@ import (
 )
 
 type LocalProvider struct {
-	games  model.GameMap
-	boards model.BoardMap
+	games model.GameMap
 }
 
 func NewLocalProvider() *LocalProvider {
 	return &LocalProvider{
-		games:  make(model.GameMap),
-		boards: make(model.BoardMap),
+		games: make(model.GameMap),
 	}
 }
 
@@ -41,38 +39,5 @@ func (l *LocalProvider) ClearGames() error {
 
 func (l *LocalProvider) HasGame(id string) (bool, error) {
 	_, ok := l.games[id]
-	return ok, nil
-}
-
-func (l *LocalProvider) PutBoard(b *model.Board) error {
-	l.boards[b.Id] = b
-	return nil
-}
-
-func (l *LocalProvider) GetBoard(id string) (*model.Board, error) {
-	return l.boards[id], nil
-}
-
-func (l *LocalProvider) GetBoards(t string) (model.BoardMap, error) {
-	bm := make(model.BoardMap)
-	for _, board := range l.boards {
-		if board.Type == t {
-			bm[board.Id] = board
-		}
-	}
-	return bm, nil
-}
-
-func (l *LocalProvider) GetAllBoards() (model.BoardMap, error) {
-	return l.boards, nil
-}
-
-func (l *LocalProvider) DeleteBoard(id string) error {
-	delete(l.boards, id)
-	return nil
-}
-
-func (l *LocalProvider) HasBoard(id string) (bool, error) {
-	_, ok := l.boards[id]
 	return ok, nil
 }
