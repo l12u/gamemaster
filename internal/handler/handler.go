@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/l12u/gamemaster/internal/config"
+	"github.com/l12u/gamemaster/internal/errcode"
 	"github.com/l12u/gamemaster/internal/storage"
 	"github.com/l12u/gamemaster/pkg/env"
 	"github.com/l12u/gamemaster/pkg/valid"
@@ -61,7 +62,9 @@ func PostGame(c *gin.Context) {
 	} else {
 		for _, player := range g.Players {
 			if !model.IsSupportedRole(player.Role) {
-				c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("invalid role given for player %s", player.Name)})
+				errcode.D(c, errcode.InvalidRole,
+					fmt.Sprintf("invalid role given for player %s", player.Name),
+				)
 			}
 		}
 	}
@@ -93,7 +96,7 @@ func GetGame(c *gin.Context) {
 	id := c.Param("id")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
@@ -118,7 +121,7 @@ func PostPlayerToGame(c *gin.Context) {
 	}
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
@@ -136,7 +139,7 @@ func PostPlayerToGame(c *gin.Context) {
 	}
 
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "already a player with this id in the game"})
+		errcode.D(c, errcode.PlayerAlreadyExist, "already a player with this id in the game")
 		return
 	}
 
@@ -161,7 +164,7 @@ func PutPlayerToGame(c *gin.Context) {
 	}
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
@@ -173,7 +176,7 @@ func PutPlayerToGame(c *gin.Context) {
 
 	p := g.GetPlayer(pId)
 	if p == nil {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a player with that id does not exist in that game"})
+		errcode.D(c, errcode.PlayerDoesNotExist, "a player with that id does not exist in that game")
 		return
 	}
 
@@ -182,7 +185,7 @@ func PutPlayerToGame(c *gin.Context) {
 
 	if newRole != "" {
 		if !model.IsSupportedRole(newRole) {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": "invalid role"})
+			errcode.D(c, errcode.InvalidRole, "invalid role")
 			return
 		}
 		p.Role = newRole
@@ -198,7 +201,7 @@ func DeletePlayerFromGame(c *gin.Context) {
 	pId := c.Param("pId")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
@@ -218,7 +221,7 @@ func DeletePlayerFromGame(c *gin.Context) {
 	}
 
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "no player with this id in the game"})
+		errcode.D(c, errcode.PlayerDoesNotExist, "no player with this id in the game")
 		return
 	}
 
@@ -240,12 +243,12 @@ func PutState(c *gin.Context) {
 	}
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
 	if !model.IsSupportedState(req.NewState) {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "not supported game state given"})
+		errcode.D(c, errcode.InvalidState, "not supported game state given")
 		return
 	}
 
@@ -267,7 +270,7 @@ func DeleteGame(c *gin.Context) {
 	id := c.Param("id")
 
 	if ok, _ := provider.HasGame(id); !ok {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a game with this id does not exist"})
+		errcode.D(c, errcode.GameDoesNotExist, "a game with this id does not exist")
 		return
 	}
 
@@ -283,7 +286,7 @@ func GetBoard(c *gin.Context) {
 	t := c.Param("type")
 
 	if !valid.ValidateSlug(t) {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "wrong format for type"})
+		errcode.D(c, errcode.InvalidType, "wrong format for type")
 		return
 	}
 
@@ -295,7 +298,7 @@ func GetBoard(c *gin.Context) {
 	}
 
 	if board == nil {
-		c.JSON(http.StatusNotFound, gin.H{"msg": "a board with this type does not exist"})
+		errcode.D(c, errcode.BoardDoesNotExist, "a board with this type does not exist")
 		return
 	}
 
