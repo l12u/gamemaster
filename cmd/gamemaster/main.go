@@ -3,16 +3,20 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/l12u/gamemaster/internal/handler"
-	"log"
+	"github.com/l12u/gamemaster/internal/middleware"
+	"k8s.io/klog"
+	"time"
 )
 
 func main() {
-	log.Println("Hello World!")
+	klog.Infoln("Hello World!")
 
 	handler.SetupProvider()
 
 	gin.DisableConsoleColor()
-	r := gin.Default()
+	r := gin.New()
+	r.Use(middleware.Logger(3 * time.Second))
+	r.Use(gin.Recovery())
 
 	r.POST("/games", handler.PostGame)
 	r.GET("/games", handler.GetAllGames)

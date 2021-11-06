@@ -15,6 +15,10 @@ type BoardConfig struct {
 	Boards []*Board `json:"boards"`
 }
 
+func Empty() *BoardConfig {
+	return &BoardConfig{Boards: []*Board{}}
+}
+
 func FromFile(path string) (*BoardConfig, error) {
 	file, err := os.Open(path)
 	if err != nil {

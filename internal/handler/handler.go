@@ -7,7 +7,7 @@ import (
 	"github.com/l12u/gamemaster/internal/storage"
 	"github.com/l12u/gamemaster/pkg/env"
 	"github.com/l12u/gamemaster/pkg/valid"
-	"log"
+	"k8s.io/klog"
 	"net/http"
 	"time"
 
@@ -38,7 +38,8 @@ func SetupProvider() {
 	c, err := config.FromFile(env.StringOrDefault("BOARD_CONFIG", "/etc/gamemaster/boards.json"))
 	if err != nil {
 		// give a warning
-		log.Println("warning: no board config found, that is not good :(")
+		klog.Warningln("no board config found, that is not good :(")
+		c = config.Empty()
 	}
 	cfg = c
 }
