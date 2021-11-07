@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+  name: gamemaster-ingress
+spec:
+  rules:
+  - host: gm.l12u.party
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          serviceName: gamemaster
+          servicePort: 8080
+  tls:
+  - hosts:
+    - gm.l12u.party
+    secretName: gamemaster-cert

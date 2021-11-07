@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamemaster-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamemaster-redis
+  template:
+    metadata:
+      labels:
+        app: gamemaster-redis
+    spec:
+      containers:
+      - name: gamemaster-redis
+        image: redis:6.0-alpine
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gamemaster-redis
+spec:
+  selector:
+    app: gamemaster-redis
+  ports:
+    - name: redis
+      port: 6379
