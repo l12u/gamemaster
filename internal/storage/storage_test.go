@@ -216,7 +216,10 @@ func getProviderSize(p Provider) int {
 
 func prepareProvider(p Provider, ids []string) {
 	for _, id := range ids {
-		p.PutGame(&model.Game{Id: id})
+		err := p.PutGame(&model.Game{Id: id})
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
