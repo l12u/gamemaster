@@ -34,13 +34,19 @@ func SetupProvider() {
 	} else {
 		provider = storage.NewLocalProvider()
 	}
+}
 
+func SetupBoardConfigAuto() {
 	c, err := config.FromFile(env.StringOrDefault("BOARD_CONFIG", "/etc/gamemaster/boards.json"))
 	if err != nil {
 		// give a warning
 		klog.Warningln("no board config found, that is not good :(")
 		c = config.Empty()
 	}
+	SetupBoardConfig(c)
+}
+
+func SetupBoardConfig(c *config.BoardConfig) {
 	cfg = c
 }
 
@@ -54,21 +60,50 @@ func PostGame(c *gin.Context) {
 		return
 	}
 
+	// check type
+	t := g.Type
+	board := cfg.GetBoard(t)
+	if board == nil {
+		errcode.D(c, errcode.BoardDoesNotExist, "a board with this type does not exist")
+		return
+	}
+
 	ct := time.Now().UnixMilli()
 	g.CreatedAt = ct
 	g.UpdatedAt = ct
 
+	hosts := 0
 	if g.Players == nil {
 		g.Players = make([]*model.Player, 0)
 	} else {
+		plMap := make(map[string]*model.Player, len(g.Players))
 		for _, player := range g.Players {
 			if !model.IsSupportedRole(player.Role) {
 				errcode.D(c, errcode.InvalidRole,
 					fmt.Sprintf("invalid role given for player %s", player.Name),
 				)
+				return
 			}
+
+			if player.Role == model.RoleHost {
+				hosts++
+			}
+			plMap[player.Id] = player
+		}
+
+		if len(plMap) < len(g.Players) {
+			errcode.S(c, http.StatusBadRequest, "duplicate player ids are not allowed")
+			return
 		}
 	}
+	if hosts == 0 {
+		errcode.S(c, http.StatusBadRequest, "there has to be at least one host")
+		return
+	} else if hosts > 1 {
+		errcode.S(c, http.StatusBadRequest, "too many hosts for one game")
+		return
+	}
+
 	g.State = model.StateLobby
 	g.Id = uuid.NewString()
 
@@ -291,13 +326,7 @@ func GetBoard(c *gin.Context) {
 		return
 	}
 
-	var board *config.Board
-	for _, b := range cfg.Boards {
-		if b.Type == t {
-			board = b
-		}
-	}
-
+	board := cfg.GetBoard(t)
 	if board == nil {
 		errcode.D(c, errcode.BoardDoesNotExist, "a board with this type does not exist")
 		return
