@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/l12u/gamemaster/internal/model"
@@ -48,6 +49,10 @@ func (r *RedisProvider) Connect() error {
 }
 
 func (r *RedisProvider) PutGame(g *model.Game) error {
+	if g == nil {
+		return errors.New("game can not be nil")
+	}
+
 	m, err := json.Marshal(g)
 	if err != nil {
 		return err
@@ -127,6 +132,10 @@ func (r *RedisProvider) ClearGames() error {
 	if err != nil {
 		return err
 	}
+	if len(gameIds) == 0 {
+		// we don't have to do anything
+		return nil
+	}
 	gameKeys := getKeysFromGameIds(gameIds)
 
 	// delete all single game entries from Redis
@@ -141,8 +150,8 @@ func (r *RedisProvider) ClearGames() error {
 }
 
 func (r *RedisProvider) HasGame(id string) (bool, error) {
-	err := r.client.Exists(ctx, getKeyFromGame(id)).Err()
-	return err == nil, err
+	code, err := r.client.Exists(ctx, getKeyFromGame(id)).Result()
+	return code == 1, err
 }
 
 func getKeyFromGame(id string) string {

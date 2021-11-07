@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"github.com/l12u/gamemaster/internal/model"
 )
 
@@ -15,6 +16,10 @@ func NewLocalProvider() *LocalProvider {
 }
 
 func (l *LocalProvider) PutGame(g *model.Game) error {
+	if g == nil {
+		return errors.New("game can not be nil")
+	}
+
 	l.games[g.Id] = g
 	return nil
 }
