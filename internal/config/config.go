@@ -19,6 +19,15 @@ func Empty() *BoardConfig {
 	return &BoardConfig{Boards: []*Board{}}
 }
 
+func (b *BoardConfig) GetBoard(t string) *Board {
+	for _, board := range b.Boards {
+		if board.Type == t {
+			return board
+		}
+	}
+	return nil
+}
+
 func FromFile(path string) (*BoardConfig, error) {
 	file, err := os.Open(path)
 	if err != nil {

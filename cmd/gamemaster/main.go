@@ -12,6 +12,7 @@ func main() {
 	klog.Infoln("Hello World!")
 
 	handler.SetupProvider()
+	handler.SetupBoardConfigAuto()
 
 	gin.DisableConsoleColor()
 	r := gin.New()
