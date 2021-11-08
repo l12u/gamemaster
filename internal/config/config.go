@@ -46,5 +46,9 @@ func FromFile(path string) (*BoardConfig, error) {
 		return nil, err
 	}
 
+	if cfg.Boards == nil {
+		cfg.Boards = make([]*Board, 0)
+	}
+
 	return &cfg, nil
 }

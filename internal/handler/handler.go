@@ -7,6 +7,7 @@ import (
 	"github.com/l12u/gamemaster/internal/storage"
 	"github.com/l12u/gamemaster/pkg/env"
 	"github.com/l12u/gamemaster/pkg/valid"
+	"io"
 	"k8s.io/klog"
 	"net/http"
 	"time"
@@ -54,9 +55,13 @@ func SetupBoardConfig(c *config.BoardConfig) {
 func PostGame(c *gin.Context) {
 	var g model.Game
 
-	err := c.BindJSON(&g)
+	err := c.ShouldBindJSON(&g)
 	if err != nil {
-		_ = c.Error(err)
+		if err == io.EOF {
+			errcode.S(c, http.StatusBadRequest, "request should contain json body with board type")
+		} else {
+			_ = c.Error(err)
+		}
 		return
 	}
 
@@ -150,7 +155,7 @@ func PostPlayerToGame(c *gin.Context) {
 	id := c.Param("id")
 	var player model.Player
 
-	err := c.BindJSON(&player)
+	err := c.ShouldBindJSON(&player)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -193,7 +198,7 @@ func PutPlayerToGame(c *gin.Context) {
 	pId := c.Param("pId")
 
 	var data *model.Player
-	err := c.BindJSON(&data)
+	err := c.ShouldBindJSON(&data)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -274,7 +279,7 @@ func PutState(c *gin.Context) {
 	id := c.Param("id")
 
 	var req model.UpdateStateRequest
-	if c.BindJSON(&req) != nil {
+	if c.ShouldBindJSON(&req) != nil {
 		return
 	}
 
