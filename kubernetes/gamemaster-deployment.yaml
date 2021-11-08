@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamemaster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamemaster
+  template:
+    metadata:
+      labels:
+        app: gamemaster
+    spec:
+      containers:
+      - name: gamemaster
+        image: ghcr.io/l12u/gamemaster:0.3.1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ENABLE_REDIS_STORAGE
+          value: "true"
+        - name: REDIS_ADDRESS
+          value: "gamemaster-redis:6379"
+        - name: BOARD_CONFIG
+          value: "/etc/gamemaster/boards.json"
+        volumeMounts:
+        - mountPath: /etc/gamemaster
+          name: boardconfig
+      volumes:
+      - name: boardconfig
+        configMap:
+          name: gamemaster-boardconfig
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gamemaster
+spec:
+  selector:
+    app: gamemaster
+  ports:
+  - name: gamemaster
+    port: 8080
