@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gamemaster-boardconfig
+data:
+  boards.json: |
+    {
+      "boards": [
+        {
+          "type": "hangman",
+          "url": "https://board.l12u.party/hangman"
+        }
+      ]
+    }

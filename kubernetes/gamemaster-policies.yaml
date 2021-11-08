@@ -1,0 +1,42 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: gamemaster-auth
+spec:
+  selector:
+    matchLabels:
+      app: gamemaster
+  jwtRules:
+  - issuer: "testing@l12u.party"
+    jwks: |
+      {
+        "keys": [
+          {
+            "e": "AQAB",
+            "kid": "iCh2wlTRPK66w2_aS17E47TwX3_BC3bMj8vaEuIhzGY",
+            "kty": "RSA",
+            "n": "zv-qVZuZFtEROvglHMvtdOhhw9ryM429mO8TryX0a-OH7svwDLCYgBXmksgRSydXHuxhodPbt-rzI0ZOuGr9f_TYLColNXV9YLxvxgVKaoqenu6YkH35WXsQ6H9gZu09O-MFa-btHPASDCkHb62c5y9ORY-h1tMmTpFxh0AslozfGHU0f6JquG6i4MTqNT-ONsdzHzf6Ydaf2NtQLwAq-nxqAIrIgsiAzeDK1Sjziw_LdBOKY_Vv61WHjvRabdCSQflEIDPbcN7E6cOfRUnj1WbMNgKInR2iuHUROEAWEDDGED46XFVCUBwr0gxggdMigJefxAeEcJVp0Xf48I78nQ"
+          }
+        ]
+      }
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: gamemaster-force-jwt
+spec:
+  selector:
+    matchLabels:
+      app: gamemaster
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["l12u"]
+  - to: 
+    - operation:
+        methods: ["GET"]
+        paths: ["/games"]
+  - from:
+    - source:
+        requestPrincipals: ["*"]
