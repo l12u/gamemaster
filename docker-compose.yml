@@ -6,7 +6,7 @@ services:
     ports:
       - 6379:6379
   gamemaster:
-    image: l12u/gamemaster:latest
+    image: l12u/gamemaster:0.3.1
     build: .
     environment:
       ENABLE_REDIS_STORAGE: "true"
@@ -14,3 +14,5 @@ services:
     ports:
       - 8080:8080
     restart: always
+    volumes:
+      - ./boards.json:/etc/gamemaster/boards.json

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: gamemaster
-        image: ghcr.io/l12u/gamemaster:0.3.1
+        image: ghcr.io/l12u/gamemaster:latest
         ports:
         - containerPort: 8080
         env:

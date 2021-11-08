@@ -101,7 +101,7 @@ func PostGame(c *gin.Context) {
 			return
 		}
 	}
-	if hosts == 0 {
+	if hosts == 0 && len(g.Players) > 0 {
 		errcode.S(c, http.StatusBadRequest, "there has to be at least one host")
 		return
 	} else if hosts > 1 {

@@ -1,0 +1,8 @@
+{
+  "boards": [
+    {
+      "type": "hangman",
+      "url": "localhost:8081"
+    }
+  ]
+}

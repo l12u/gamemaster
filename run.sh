@@ -15,4 +15,4 @@ fi
 # we only need MSYS_NO_PATHCONV when running this script in Windows
 # because otherwise Mingw will try to convert
 # the given paths and that breaks everything.
-MSYS_NO_PATHCONV=1 docker run -it --rm -p 80:80 $IMAGE
+MSYS_NO_PATHCONV=1 docker run -it --rm -p 8080:8080 $IMAGE

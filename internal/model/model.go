@@ -38,7 +38,7 @@ type UpdateStateRequest struct {
 }
 
 func (g GameMap) AsSlice() []*Game {
-	sl := make([]*Game, len(g))
+	sl := make([]*Game, 0)
 	for _, game := range g {
 		sl = append(sl, game)
 	}
