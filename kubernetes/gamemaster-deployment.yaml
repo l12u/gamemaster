@@ -11,11 +11,10 @@ spec:
     metadata:
       labels:
         app: gamemaster
-        version: v1
     spec:
       containers:
       - name: gamemaster
-        image: ghcr.io/l12u/gamemaster:0.3.0
+        image: ghcr.io/l12u/gamemaster:0.3.1
         ports:
         - containerPort: 8080
         env:

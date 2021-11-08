@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: l12u
 resources:
   - namespace.yaml
-  - deployment.yaml
-  - ingress.yaml
-  - istio-policies.yaml
+  - redis-deployment.yaml
+  - gamemaster-configmap.yaml
+  - gamemaster-deployment.yaml
+  - gamemaster-policies.yaml
+  - gamemaster-ingress.yaml

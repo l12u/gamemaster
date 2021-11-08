@@ -2,13 +2,12 @@ apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
   name: gamemaster-auth
-  namespace: l12u
 spec:
   selector:
     matchLabels:
       app: gamemaster
   jwtRules:
-  - issuer: "testing@superioz.de"
+  - issuer: "testing@l12u.party"
     jwks: |
       {
         "keys": [
@@ -25,7 +24,6 @@ apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: gamemaster-force-jwt
-  namespace: l12u
 spec:
   selector:
     matchLabels:
